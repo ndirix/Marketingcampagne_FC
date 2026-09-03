@@ -216,7 +216,7 @@
     <!-- Zorg dat dit bestand in dezelfde map staat! -->
     <script src="aoi_database.js"></script>
     <script>
-        // Blokkeer het contextmenu (rechtermuisknop) om opslaan te bemoeilijken
+        // Blokkeer het contextmenu (rechtermuisknop) 
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
@@ -333,7 +333,7 @@
 
                 let valid = true;
         
-                // 1. Check: Nooit twee mannen na elkaar
+                // 1. Check:
                 for (let k = 1; k < arr.length; k++) {
                     if (arr[k-1].startsWith('M') && arr[k].startsWith('M')) {
                         valid = false;
@@ -342,12 +342,12 @@
                 }
                 if (!valid) continue;
 
-                // 2. Check: Minstens 3 afbeeldingen tussen gepaarde afbeeldingen
+                // 2. Check: 
                 for (let i = 0; i < arr.length; i++) {
                     let current = arr[i];
                     let baseCurrent = current.substring(0, current.lastIndexOf('_'));
 
-                    // Check de volgende 3 posities op hetzelfde paartje
+                    // Check de volgende 3 posities 
                     for (let offset = 1; offset <= 3; offset++) {
                         if (i + offset < arr.length) {
                             let next = arr[i + offset];
@@ -762,35 +762,76 @@
         let secondTaskData = {};
         const ratingCriteria = ["Aantrekkelijk", "Vriendelijk", "Sociaal", "Competent", "Betrouwbaar"];
 
+        function parseImageName(filename) {
+            const parts = filename.split('_');
+            return {
+                model: parts[0],                                    
+                object: parts[1] ? parts[1].toLowerCase() : '',     
+                type: parts[2] ? parts[2].replace('.png', '') : ''  
+            };
+        }
+
+        function generateSecondTaskSequence() {
+            // Filter vrouwelijke stimuli 
+            const w05_1 = baseStimuli.filter(s => s.startsWith('W05_') && s.endsWith('_1.png')); 
+            const w05_2 = baseStimuli.filter(s => s.startsWith('W05_') && s.endsWith('_2.png')); 
+            const w06_1 = baseStimuli.filter(s => s.startsWith('W06_') && s.endsWith('_1.png')); 
+            const w06_2 = baseStimuli.filter(s => s.startsWith('W06_') && s.endsWith('_2.png')); 
+
+            // Filter mannelijke stimuli
+            const m01 = baseStimuli.filter(s => s.startsWith('M01_'));
+            const m02 = baseStimuli.filter(s => s.startsWith('M02_'));
+
+            const maxAttempts = 50000;
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                // Selecteer de gewenste aantallen (totaal = 10)
+                const sW05_1 = shuffleArray(w05_1).slice(0, 2);
+                const sW05_2 = shuffleArray(w05_2).slice(0, 2);
+                const sW06_1 = shuffleArray(w06_1).slice(0, 2);
+                const sW06_2 = shuffleArray(w06_2).slice(0, 2);
+                const sM01   = shuffleArray(m01).slice(0, 1);
+                const sM02   = shuffleArray(m02).slice(0, 1);
+
+                let set10 = [...sW05_1, ...sW05_2, ...sW06_1, ...sW06_2, ...sM01, ...sM02];
+                set10 = shuffleArray(set10);
+
+                let valid = true;
+                for (let i = 1; i < set10.length; i++) {
+                    const prev = parseImageName(set10[i - 1]);
+                    const curr = parseImageName(set10[i]);
+
+                    // Restrictie 1: Geen 2 dezelfde modellen achter elkaar
+                    if (prev.model === curr.model) {
+                        valid = false;
+                        break;
+                    }
+                    // Restrictie 2: Geen 2 dezelfde objecten achter elkaar
+                    if (prev.object === curr.object) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (valid) return set10; // Geldige reeks gevonden!
+            }
+
+            console.warn("Geen perfecte reeks gevonden binnen het maximaal aantal pogingen. Fallback toegepast.");
+            return shuffleArray([
+                ...w05_1.slice(0,2), ...w05_2.slice(0,2), 
+                ...w06_1.slice(0,2), ...w06_2.slice(0,2), 
+                ...m01.slice(0,1), ...m02.slice(0,1)
+            ]);
+        }
+
         function startSecondTask() {
             if (typeof webgazer.pause === 'function') webgazer.pause(); 
             isExperimentRunning = false;
             showFeedbackDot = false;
             document.getElementById('live-gaze-dot').style.display = 'none';
 
-            // Filter de groepen
-            let alleMannen = baseStimuli.filter(s => s.startsWith('M'));
-            let alleVrouwen = baseStimuli.filter(s => s.startsWith('W'));
-            
-            // Haal de unieke basisnamen van de vrouwen op (zonder de _1 of _2)
-            let uniekeVrouwenBases = [...new Set(alleVrouwen.map(s => s.substring(0, s.lastIndexOf('_'))))];
-
-            // Schud de arrays willekeurig
-            alleMannen = shuffleArray(alleMannen);
-            uniekeVrouwenBases = shuffleArray(uniekeVrouwenBases);
-
-            // Selecteer 2 mannen
-            const gekozenMannen = alleMannen.slice(0, 2);
-
-            // Selecteer 4 unieke vrouwen ZONDER decolleté (_1)
-            const gekozenVrouwenZonder = uniekeVrouwenBases.slice(0, 4).map(base => base + "_1.png");
-
-            // Selecteer 4 ANDERE unieke vrouwen MET decolleté (_2)
-            const gekozenVrouwenMet = uniekeVrouwenBases.slice(4, 8).map(base => base + "_2.png");
-
-            // Voeg samen en schud de finale lijst voor taak 2 (Totaal = 10 foto's)
-            secondTaskImages = [...gekozenMannen, ...gekozenVrouwenZonder, ...gekozenVrouwenMet];
-            secondTaskImages = shuffleArray(secondTaskImages);
+            // Genereer de 10 afbeeldingen met alle restricties
+            secondTaskImages = generateSecondTaskSequence();
             
             currentSecondTaskIndex = 0;
             buildSecondTaskSliders();
