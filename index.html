@@ -216,7 +216,7 @@
     <!-- Zorg dat dit bestand in dezelfde map staat! -->
     <script src="aoi_database.js"></script>
     <script>
-        // Blokkeer het contextmenu (rechtermuisknop) 
+        // Blokkeer het contextmenu (rechtermuisknop) om opslaan te bemoeilijken
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
@@ -333,7 +333,7 @@
 
                 let valid = true;
         
-                // 1. Check:
+                // 1. Check: Nooit twee mannen na elkaar
                 for (let k = 1; k < arr.length; k++) {
                     if (arr[k-1].startsWith('M') && arr[k].startsWith('M')) {
                         valid = false;
@@ -342,12 +342,12 @@
                 }
                 if (!valid) continue;
 
-                // 2. Check: 
+                // 2. Check: Minstens 3 afbeeldingen tussen gepaarde afbeeldingen
                 for (let i = 0; i < arr.length; i++) {
                     let current = arr[i];
                     let baseCurrent = current.substring(0, current.lastIndexOf('_'));
 
-                    // Check de volgende 3 posities 
+                    // Check de volgende 3 posities op hetzelfde paartje
                     for (let offset = 1; offset <= 3; offset++) {
                         if (i + offset < arr.length) {
                             let next = arr[i + offset];
@@ -765,18 +765,18 @@
         function parseImageName(filename) {
             const parts = filename.split('_');
             return {
-                model: parts[0],                                    
-                object: parts[1] ? parts[1].toLowerCase() : '',     
-                type: parts[2] ? parts[2].replace('.png', '') : ''  
+                model: parts[0],                                    // bijv. "W05", "W06", "M01", "M02"
+                object: parts[1] ? parts[1].toLowerCase() : '',     // bijv. "airfryer"
+                type: parts[2] ? parts[2].replace('.png', '') : ''  // "1" of "2"
             };
         }
 
         function generateSecondTaskSequence() {
-            // Filter vrouwelijke stimuli 
-            const w05_1 = baseStimuli.filter(s => s.startsWith('W05_') && s.endsWith('_1.png')); 
-            const w05_2 = baseStimuli.filter(s => s.startsWith('W05_') && s.endsWith('_2.png')); 
-            const w06_1 = baseStimuli.filter(s => s.startsWith('W06_') && s.endsWith('_1.png')); 
-            const w06_2 = baseStimuli.filter(s => s.startsWith('W06_') && s.endsWith('_2.png')); 
+            // Filter vrouwelijke stimuli per categorie
+            const w05_1 = baseStimuli.filter(s => s.startsWith('W05_') && s.endsWith('_1.png')); // W05 Zonder
+            const w05_2 = baseStimuli.filter(s => s.startsWith('W05_') && s.endsWith('_2.png')); // W05 Met
+            const w06_1 = baseStimuli.filter(s => s.startsWith('W06_') && s.endsWith('_1.png')); // W06 Zonder
+            const w06_2 = baseStimuli.filter(s => s.startsWith('W06_') && s.endsWith('_2.png')); // W06 Met
 
             // Filter mannelijke stimuli
             const m01 = baseStimuli.filter(s => s.startsWith('M01_'));
@@ -801,7 +801,7 @@
                     const prev = parseImageName(set10[i - 1]);
                     const curr = parseImageName(set10[i]);
 
-                    // Restrictie 1: Geen 2 dezelfde modellen achter elkaar
+                    // Restrictie 1: Geen 2 dezelfde modellen achter elkaar (bijv. W05-W05 of M01-M01)
                     if (prev.model === curr.model) {
                         valid = false;
                         break;
@@ -1033,7 +1033,7 @@
             changeScreen('second-task-screen', 'end-screen');
 
             const csvContent = genereerCSVData();
-            const dataPipeExperimentId = "xBiqpUlxL2qO"; 
+            const dataPipeExperimentId = "SbNr6iUtcLCe"; 
             const nou = new Date();
             const timestamp = nou.toISOString().replace(/[:.]/g, '-').slice(0, 19);
             const bestandsnaam = `eyetracking_data_P${participantMetadata.id}_${timestamp}.csv`;
@@ -1067,7 +1067,7 @@
                 fetch("https://pipe.jspsych.org/api/data/", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Accept": "*/*" },
-                    body: JSON.stringify({ experimentID: "xBiqpUlxL2qO", filename: `INCOMPLEET_eyetracking_data_P${participantMetadata.id}_${new Date().getTime()}.csv`, data: partialData }),
+                    body: JSON.stringify({ experimentID: "SbNr6iUtcLCe", filename: `INCOMPLEET_eyetracking_data_P${participantMetadata.id}_${new Date().getTime()}.csv`, data: partialData }),
                     keepalive: true
                 });
             }
