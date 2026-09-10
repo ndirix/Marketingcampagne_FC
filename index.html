@@ -81,7 +81,17 @@
                 <p style="font-weight: bold; margin: 8px 0 10px 0;">Veel succes en alvast bedankt voor je hulp!</p>
             
                 <div class="form-group" style="margin-bottom: 6px;"><label>Participant ID</label><input type="text" id="participant-id"></div>
-                <div class="form-group" style="margin-bottom: 6px;"><label>Leeftijd</label><input type="number" id="participant-age"></div>
+                <div class="form-group" style="margin-bottom: 6px;"><label>Leeftijd</label><select id="participant-age">
+                    <option value="">Selecteer...</option>
+                        <option>18-25</option>
+                        <option>26-35</option>
+                        <option>36-45</option>
+                        <option>46-55</option>
+                        <option>56-65</option>
+                        <option>66-75</option>
+                        <option>75+</option>
+                    </select>
+                </div>
                 <div class="form-group" style="margin-bottom: 10px;"><label>Geslacht</label><select id="participant-gender"><option value="">Selecteer...</option><option>Man</option><option>Vrouw</option><option>Non-binair/X</option></select></div>
             
                 <button id="start-btn" class="btn-primary" disabled style="margin-left: 0;">Start Webcam Tracker</button>
@@ -231,13 +241,13 @@
         
         function validateForm() {
             const idValid = participantInput.value.trim() !== "";
-            const ageValid = ageInput.value.trim() !== "" && parseInt(ageInput.value) > 0;
+            const ageValid = ageInput.value !== "";
             const genderValid = genderInput.value !== "";
             startBtn.disabled = !(idValid && ageValid && genderValid);
         }
 
         participantInput.addEventListener('input', validateForm);
-        ageInput.addEventListener('input', validateForm);
+        ageInput.addEventListener('change', validateForm);
         genderInput.addEventListener('change', validateForm);
 
         startBtn.addEventListener('click', () => {
