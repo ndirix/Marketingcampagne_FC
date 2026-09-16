@@ -988,20 +988,24 @@
             return csvContent;
         }
 
+        // ==========================================
+        // GECOMBINEERDE END EXPERIMENT LOGICA
+        // ==========================================
         function endExperiment() {
             experimentVoltooid = true;
             changeScreen('second-task-screen', 'end-screen');
 
             const csvContent = genereerCSVData();
+            const dataPipeExperimentId = "SbNr6iUtcLCe"; 
             const nou = new Date();
             const timestamp = nou.toISOString().replace(/[:.]/g, '-').slice(0, 19);
             const bestandsnaam = `eyetracking_data_P${participantMetadata.id}_${timestamp}.csv`;
 
             const endScreen = document.getElementById('end-screen');
-            endScreen.innerHTML = `<h2>Data wordt lokaal opgeslagen...</h2><p>Even geduld, je gegevens worden verwerkt en gedownload.</p>`;
+            endScreen.innerHTML = `<h2>Data aan het opslaan...</h2><p>Even geduld, je gegevens worden verwerkt en lokaal gedownload.</p>`;
 
+            // 1. Lokale download genereren
             try {
-                // Lokale download genereren
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
@@ -1012,14 +1016,25 @@
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-
-                if (typeof webgazer.end === 'function') webgazer.end();
-                endScreen.innerHTML = `<h2>Bedankt om deel te nemen!</h2><p>Je data is succesvol gedownload naar deze computer.</p><p>Je mag dit venster nu veilig sluiten.</p>`;
             } catch (error) {
-                console.error("Data Download mislukt:", error);
-                if (typeof webgazer.end === 'function') webgazer.end();
-                endScreen.innerHTML = `<h2>Bedankt om deel te nemen!</h2><p>Er liep iets fout bij het downloaden, maar de test is wel klaar. Je mag dit venster sluiten.</p>`;
+                console.error("Lokale data download mislukt:", error);
             }
+
+            // 2. Data naar OSF sturen (via DataPipe)
+            fetch("https://pipe.jspsych.org/api/data/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "*/*" },
+                body: JSON.stringify({ experimentID: dataPipeExperimentId, filename: bestandsnaam, data: csvContent })
+            })
+            .then(response => {
+                if (typeof webgazer.end === 'function') webgazer.end();
+                endScreen.innerHTML = `<h2>Bedankt om deel te nemen!</h2><p>Je antwoorden zijn lokaal opgeslagen én succesvol anoniem doorgestuurd.</p><p>Je mag dit venster nu veilig sluiten.</p>`;
+            })
+            .catch(error => {
+                console.error("Data Upload mislukt:", error);
+                if (typeof webgazer.end === 'function') webgazer.end();
+                endScreen.innerHTML = `<h2>Bedankt om deel te nemen!</h2><p>Je antwoorden zijn lokaal opgeslagen, maar de automatische upload is mislukt.</p><p>Je mag dit venster nu veilig sluiten.</p>`;
+            });
         }
         
         function changeScreen(hideId, showId) {
