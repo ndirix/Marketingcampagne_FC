@@ -598,17 +598,19 @@
             
             if (estimatedDegrees < 1.5) { 
                 kwalificatie = "Uitstekend!"; 
-                statusColor = "#28a745"; 
+            statusColor = "#28a745"; 
                 currentCalibrationQuality = "Uitstekend";
+                matigCount = 0; // RESET teller bij een goed resultaat
             } else if (estimatedDegrees < 3.0) { 
                 kwalificatie = "Acceptabel"; 
                 statusColor = "#b58900"; 
                 currentCalibrationQuality = "Acceptabel";
+                matigCount = 0; // RESET teller bij een acceptabel resultaat
             } else { 
                 matigCount++;
                 currentCalibrationQuality = "Matig";
                 statusColor = "#dc3545";
-                
+        
                 if (matigCount >= 3) {
                     kwalificatie = "Matig";
                 } else {
@@ -618,7 +620,8 @@
 
             const resultsDiv = document.getElementById('validation-results');
 
-            if (matigCount >= 3) {
+            // CONTRoLE AANGEPAST: Alleen waarschuwen als het HUIDIGE resultaat 'Matig' is én teller >= 3
+            if (currentCalibrationQuality === "Matig" && matigCount >= 3) {
                 document.getElementById('accuracy-text').innerHTML = `
                     <b>Kwaliteit:</b> <span style="color: ${statusColor}; font-weight: bold;">${kwalificatie}</span><br><br>
                     <span style="color: #dc3545; font-weight: bold; font-size: 16px;">De kalibratie komt helaas opnieuw op matig uit. Je kan kiezen om hier het onderzoek af te breken. Je mag ook verder klikken, maar we zullen je data wellicht niet gebruiken.</span>
@@ -628,7 +631,7 @@
                     <button id="recalibrate-btn" class="btn-secondary">Kalibratie Opnieuw Uitvoeren</button>
                     <button id="to-pre-experiment-btn" class="btn-primary">Ga verder</button>
                 `;
-                
+        
                 document.getElementById('abort-experiment-btn').addEventListener('click', abortExperiment);
                 document.getElementById('recalibrate-btn').addEventListener('click', resetAndRecalibrate);
                 document.getElementById('to-pre-experiment-btn').addEventListener('click', proceedAfterValidation);
@@ -640,7 +643,7 @@
                     <button id="recalibrate-btn" class="btn-secondary">Kalibratie Opnieuw Uitvoeren</button>
                     <button id="to-pre-experiment-btn" class="btn-primary">Ga verder</button>
                 `;
-                
+        
                 document.getElementById('recalibrate-btn').addEventListener('click', resetAndRecalibrate);
                 document.getElementById('to-pre-experiment-btn').addEventListener('click', proceedAfterValidation);
             }
